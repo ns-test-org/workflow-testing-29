@@ -1,84 +1,189 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
-const slogans = [
-  "Turn chats into apps",
-  "Prompt. Ship. Repeat.",
-  "Build anything from a chat",
-  "Ideas → Apps, instantly",
-  "From zero to MVP in minutes",
-  "Your cofounder in the command line",
-  "Draft, iterate, deploy",
-  "Ship faster than you can type",
-  "Design in text, deliver in code",
-  "Dream it. Prompt it. Run it.",
-  "Chat-native app building",
-  "From prompt to product",
-  "One prompt, infinite apps",
-  "Stop scaffolding. Start shipping.",
-  "Prototype at the speed of thought",
-  "Make conversations executable"
-];
+export default function Calculator() {
+  const [display, setDisplay] = useState('0');
+  const [previousValue, setPreviousValue] = useState<number | null>(null);
+  const [operation, setOperation] = useState<string | null>(null);
+  const [waitingForOperand, setWaitingForOperand] = useState(false);
 
-export default function Landing() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isVisible, setIsVisible] = useState(true);
+  const inputNumber = (num: string) => {
+    if (waitingForOperand) {
+      setDisplay(num);
+      setWaitingForOperand(false);
+    } else {
+      setDisplay(display === '0' ? num : display + num);
+    }
+  };
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIsVisible(false);
-      setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % slogans.length);
-        setIsVisible(true);
-      }, 400);
-    }, 2800);
+  const inputDecimal = () => {
+    if (waitingForOperand) {
+      setDisplay('0.');
+      setWaitingForOperand(false);
+    } else if (display.indexOf('.') === -1) {
+      setDisplay(display + '.');
+    }
+  };
 
-    return () => clearInterval(interval);
-  }, []);
+  const clear = () => {
+    setDisplay('0');
+    setPreviousValue(null);
+    setOperation(null);
+    setWaitingForOperand(false);
+  };
+
+  const performOperation = (nextOperation: string) => {
+    const inputValue = parseFloat(display);
+
+    if (previousValue === null) {
+      setPreviousValue(inputValue);
+    } else if (operation) {
+      const currentValue = previousValue || 0;
+      const newValue = calculate(currentValue, inputValue, operation);
+
+      setDisplay(String(newValue));
+      setPreviousValue(newValue);
+    }
+
+    setWaitingForOperand(true);
+    setOperation(nextOperation);
+  };
+
+  const calculate = (firstValue: number, secondValue: number, operation: string) => {
+    switch (operation) {
+      case '+':
+        return firstValue + secondValue;
+      case '-':
+        return firstValue - secondValue;
+      case '×':
+        return firstValue * secondValue;
+      case '÷':
+        return firstValue / secondValue;
+      case '=':
+        return secondValue;
+      default:
+        return secondValue;
+    }
+  };
+
+  const handleEquals = () => {
+    const inputValue = parseFloat(display);
+
+    if (previousValue !== null && operation) {
+      const newValue = calculate(previousValue, inputValue, operation);
+      setDisplay(String(newValue));
+      setPreviousValue(null);
+      setOperation(null);
+      setWaitingForOperand(true);
+    }
+  };
+
+  const Button = ({ 
+    onClick, 
+    className = '', 
+    children, 
+    variant = 'number' 
+  }: { 
+    onClick: () => void; 
+    className?: string; 
+    children: React.ReactNode; 
+    variant?: 'number' | 'operator' | 'function' | 'equals';
+  }) => {
+    const baseClasses = "h-16 rounded-full font-medium text-xl transition-all duration-150 active:scale-95 hover:brightness-110";
+    
+    const variantClasses = {
+      number: "bg-gray-700 text-white hover:bg-gray-600",
+      operator: "bg-orange-500 text-white hover:bg-orange-400",
+      function: "bg-gray-500 text-black hover:bg-gray-400",
+      equals: "bg-orange-500 text-white hover:bg-orange-400"
+    };
+
+    return (
+      <button
+        className={`${baseClasses} ${variantClasses[variant]} ${className}`}
+        onClick={onClick}
+      >
+        {children}
+      </button>
+    );
+  };
 
   return (
-    <div className="relative h-[100dvh] w-full overflow-hidden bg-black text-white">
-      {/* Enhanced animated aurora background layers */}
-      <div className="absolute inset-0 bg-aurora-layer-1" />
-      <div className="absolute inset-0 bg-aurora-layer-2" />
-      <div className="absolute inset-0 bg-aurora-layer-3" />
-      
-      {/* Floating particles overlay */}
-      <div className="absolute inset-0 bg-particles" />
-      
-      {/* Main content - centered */}
-      <main className="relative z-10 h-full flex flex-col items-center justify-center px-6">
-        <h1 className="text-center text-[clamp(28px,6vw,64px)] font-medium tracking-tight mb-4">
-          Turn Chats into Apps
-        </h1>
-        
-        {/* Rotating slogans */}
-        <div className="mt-4 h-8 md:h-10 overflow-hidden flex items-center justify-center">
-          <span
-            className={`inline-block text-center text-[clamp(18px,3vw,32px)] font-light transition-all duration-[400ms] ease-in-out ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
-            }`}
-          >
-            {slogans[currentIndex]}
-          </span>
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <div className="bg-black rounded-3xl p-6 shadow-2xl border border-gray-800 max-w-sm w-full">
+        {/* Display */}
+        <div className="bg-black rounded-2xl p-6 mb-4">
+          <div className="text-right text-white text-4xl font-light overflow-hidden">
+            {display.length > 9 ? parseFloat(display).toExponential(3) : display}
+          </div>
         </div>
-      </main>
-      
-      {/* Start Prompting arrow pointing left - bottom left */}
-      <div className="absolute left-6 md:left-8 bottom-[5%] z-20 flex items-center gap-3 arrow-point-left">
-        <div className="flex items-center gap-2 text-white/80 font-medium text-sm md:text-base">
-          <svg 
-            className="w-5 h-5 md:w-6 md:h-6 animate-bounce-horizontal" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          <span>Start prompting</span>
+
+        {/* Button Grid */}
+        <div className="grid grid-cols-4 gap-3">
+          {/* Row 1 */}
+          <Button onClick={clear} variant="function" className="col-span-3">
+            Clear
+          </Button>
+          <Button onClick={() => performOperation('÷')} variant="operator">
+            ÷
+          </Button>
+
+          {/* Row 2 */}
+          <Button onClick={() => inputNumber('7')} variant="number">
+            7
+          </Button>
+          <Button onClick={() => inputNumber('8')} variant="number">
+            8
+          </Button>
+          <Button onClick={() => inputNumber('9')} variant="number">
+            9
+          </Button>
+          <Button onClick={() => performOperation('×')} variant="operator">
+            ×
+          </Button>
+
+          {/* Row 3 */}
+          <Button onClick={() => inputNumber('4')} variant="number">
+            4
+          </Button>
+          <Button onClick={() => inputNumber('5')} variant="number">
+            5
+          </Button>
+          <Button onClick={() => inputNumber('6')} variant="number">
+            6
+          </Button>
+          <Button onClick={() => performOperation('-')} variant="operator">
+            −
+          </Button>
+
+          {/* Row 4 */}
+          <Button onClick={() => inputNumber('1')} variant="number">
+            1
+          </Button>
+          <Button onClick={() => inputNumber('2')} variant="number">
+            2
+          </Button>
+          <Button onClick={() => inputNumber('3')} variant="number">
+            3
+          </Button>
+          <Button onClick={() => performOperation('+')} variant="operator">
+            +
+          </Button>
+
+          {/* Row 5 */}
+          <Button onClick={() => inputNumber('0')} variant="number" className="col-span-2">
+            0
+          </Button>
+          <Button onClick={inputDecimal} variant="number">
+            .
+          </Button>
+          <Button onClick={handleEquals} variant="equals">
+            =
+          </Button>
         </div>
       </div>
     </div>
   );
 }
+
